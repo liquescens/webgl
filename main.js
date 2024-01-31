@@ -1,5 +1,6 @@
 // @ts-check
 // import * as THREE from './node_modules/three/build/three.module.js';
+// import { ImprovedNoise } from './node_modules/three/examples/jsm/math/ImprovedNoise.js';
 import * as THREE from 'three';
 import { OrbitControls } from './node_modules/three/examples/jsm/controls/OrbitControls.js';
 import { MapControls } from './node_modules/three/examples/jsm/controls/MapControls.js';
@@ -27,8 +28,8 @@ const texture_loader = new THREE.TextureLoader();
 
 function createGroundMesh()
 {
-    let texture = texture_loader.load('textures/forest_ground_04_diff_1k.jpg');
-    let texture_bump = texture_loader.load('textures/forest_ground_04_disp_1k.png');
+    let texture = texture_loader.load('assets/textures/forest_ground_04_diff_1k.jpg');
+    let texture_bump = texture_loader.load('assets/textures/forest_ground_04_disp_1k.png');
     let material = new THREE.MeshStandardMaterial({ map: texture, bumpMap: texture_bump, bumpScale: 10 });
     let geometry = new THREE.PlaneGeometry(256, 256, 256, 256);
     let vertices = geometry.attributes.position;
