@@ -1,6 +1,5 @@
 // @ts-check
 // import * as THREE from './node_modules/three/build/three.module.js';
-// import { ImprovedNoise } from './node_modules/three/examples/jsm/math/ImprovedNoise.js';
 import * as THREE from 'three';
 import { OrbitControls } from './node_modules/three/examples/jsm/controls/OrbitControls.js';
 import { MapControls } from './node_modules/three/examples/jsm/controls/MapControls.js';
