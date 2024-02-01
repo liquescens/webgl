@@ -18,7 +18,16 @@ export class HeightMapGenerator
          * @param {number} x 
          * @param {number} y 
          */
-        let generateHeight = (x, y) => this.components.map(([scale, weight], index) => this.perlin.noise(x * scale, y * scale, index) * weight).reduce((s, a) => s + a, 0);
-        return Array.from({ length: width }, (_, x) => Array.from({ length: height }, (_, y) => generateHeight(x, y)));
+        return Array.from({ length: width }, (_, x) => Array.from({ length: height }, (_, y) => this.generateHeight(x, y)));
+    }
+
+    /**
+     * @param {number} x 
+     * @param {number} y 
+     * @returns 
+     */
+    generateHeight(x, y)
+    {
+        return this.components.map(([scale, weight], index) => this.perlin.noise(x * scale, y * scale, index) * weight).reduce((s, a) => s + a, 0);
     }
 }

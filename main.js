@@ -8,10 +8,12 @@ import { GLTFLoader } from './node_modules/three/examples/jsm/loaders/GLTFLoader
 // import { Water } from './node_modules/three/examples/jsm/objects/Water2.js';
 // import { Water } from './node_modules/three/examples/jsm/objects/Water.js';
 import { HeightMapGenerator } from './js/HeightMapGenerator.js';
+import { CameraControls } from './js/CameraControls.js';
 import { ImprovedNoise } from './node_modules/three/examples/jsm/math/ImprovedNoise.js';
+import { InstancedObject } from './js/InstancedObject.js';
 
 const height_map_generator = new HeightMapGenerator();
-const heights = height_map_generator.generate(257, 257);
+const height_map = height_map_generator.generate(257, 257);
 
 const gltf_loader = new GLTFLoader();
 
@@ -30,7 +32,7 @@ function createGroundMesh()
 {
     let texture = texture_loader.load('assets/textures/forest_ground_04_diff_1k.jpg');
     let texture_bump = texture_loader.load('assets/textures/forest_ground_04_disp_1k.png');
-    let material = new THREE.MeshStandardMaterial({ map: texture, bumpMap: texture_bump, bumpScale: 10 });
+    let material = new THREE.MeshStandardMaterial({ map: texture, bumpMap: texture_bump, bumpScale: 10, color: 'white' });
     let geometry = new THREE.PlaneGeometry(256, 256, 256, 256);
     let vertices = geometry.attributes.position;
     let uvs = geometry.attributes.uv;
@@ -39,7 +41,7 @@ function createGroundMesh()
     {
         let x = i % 257;
         let y = Math.floor(i / 257);
-        vertices.setZ(i, heights[x][y]);
+        vertices.setZ(i, height_map[x][y]);
     }
     
     for (let i = 0; i < uvs.count; i++)
@@ -53,110 +55,56 @@ function createGroundMesh()
     return mesh;
 }
 
+/**
+ * @param {HeightMapGenerator} height_map_generator
+ * @param {number} perlin_z
+ * @param {number} noise_threshold
+ */
+function treeCondition(height_map_generator, perlin_z, noise_threshold)
+{
+    let noise = 0, height = 0, r = 0;
+    return function(/** @type {number} */ x, /** @type {number} */ y)
+    {
+        noise = height_map_generator.perlin.noise(x * 0.05, y * 0.05, perlin_z);
+        if (noise < noise_threshold) return;
+        r = Math.random();
+        if (r * r > noise) return;
+        height = height_map_generator.generateHeight(x, y);
+        if (height < -9) return;
+        return height;
+    }
+}
+
+/**
+ * @param {HeightMapGenerator} height_map_generator
+ * @param {number} perlin_z
+ * @param {number} noise_threshold
+ */
+function grassCondition(height_map_generator, perlin_z, noise_threshold)
+{
+    let noise = 0, height = 0, r = 0;
+    return function(/** @type {number} */ x, /** @type {number} */ y)
+    {
+        noise = height_map_generator.perlin.noise(x * 0.05, y * 0.05, perlin_z);
+        if (noise < noise_threshold) return;
+        height = height_map_generator.generateHeight(x, y);
+        if (height < -9) return;
+        return height;
+    }
+}
+
 const ground = createGroundMesh();
+const ground_grid = new THREE.LineSegments(ground.geometry);
+ground_grid.rotateX(Math.PI * -0.5);
 const hemisphere_light = new THREE.HemisphereLight(0xB1E1FF, 0xB97A20, 1);
 const light = new THREE.PointLight(0xffffff, 10240, 0, 1.5);
 light.position.set(-128, 150, 128);
 
 const scene = new THREE.Scene();
 scene.add(ground);
+scene.add(ground_grid);
 scene.add(hemisphere_light);
 scene.add(light);
-
-class InstancedObject
-{
-    /**
-     * @param {THREE.Group} group
-     * @param {string} name
-     * @param {number} count 
-     * @param {(x: number, y: number) => number | undefined} condition 
-     */
-    constructor(group, name, count, condition)
-    {
-        this.object = group.getObjectByName(name);
-        if (!this.object) throw "";
-        this.meshes = this.object.children.map(base_mesh => this._createInstancedMesh(base_mesh, count));
-        let map_x = 0, map_y = 0, noise = 0, r = 0, map_height;
-        let instance_position = new THREE.Object3D();
-
-        for (let i = 0; i < count; i++)
-        {
-            while (true)
-            {
-                map_x = Math.random() * 256;
-                map_y = Math.random() * 256;
-                map_height = condition(map_x, map_y);
-                if (map_height !== undefined) break;
-                // noise = this.height_map_generator.perlin.noise(map_x * 0.05, map_y * 0.05, -10);
-                // if (noise < 0) continue;
-                // map_height = heights[Math.round(map_x)][Math.round(map_y)];
-                // if (map_height < -9) continue;
-                // // noise = heights[Math.round(map_x)][Math.round(map_y)] + 0.5;
-                // r = Math.random();
-                // if (r * r > noise) continue;
-                // break;
-            }
-
-            instance_position.position.set(map_x - 128, map_height, map_y - 128);
-            instance_position.updateMatrix();
-            instance_position.rotateY(Math.PI * 2 * Math.random());
-            this.meshes.forEach(mesh => mesh.setMatrixAt(i, instance_position.matrix));
-        }
-
-        this.meshes.forEach(mesh => mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage));
-    }
-
-    /**
-     * @param {THREE.Mesh} base_mesh
-     * @param {number} count
-     * @returns {THREE.InstancedMesh}
-     */
-    _createInstancedMesh(base_mesh, count)
-    {
-        base_mesh.geometry.scale(0.2, 0.2, 0.2);
-        return new THREE.InstancedMesh(base_mesh.geometry, base_mesh.material, count);
-    }
-}
-
-/**
- * @param {ImprovedNoise} perlin
- * @param {number} perlin_z
- * @param {number[][]} height_map
- * @param {number} noise_threshold
- */
-function treeCondition(perlin, perlin_z, height_map, noise_threshold)
-{
-    let noise = 0, height = 0, r = 0;
-    return function(/** @type {number} */ x, /** @type {number} */ y)
-    {
-        noise = perlin.noise(x * 0.05, y * 0.05, perlin_z);
-        if (noise < noise_threshold) return;
-        r = Math.random();
-        if (r * r > noise) return;
-        height = height_map[Math.round(x)][Math.round(y)];
-        if (height < -9) return;
-        return height;
-    }
-}
-
-/**
- * @param {ImprovedNoise} perlin
- * @param {number} perlin_z
- * @param {number[][]} height_map
- * @param {number} noise_threshold
- */
-function grassCondition(perlin, perlin_z, height_map, noise_threshold)
-{
-    let noise = 0, height = 0, r = 0;
-    return function(/** @type {number} */ x, /** @type {number} */ y)
-    {
-        noise = perlin.noise(x * 0.05, y * 0.05, perlin_z);
-        if (noise < noise_threshold) return;
-        height = height_map[Math.round(x)][Math.round(y)];
-        if (height < -9) return;
-        return height;
-    }
-}
 
 gltf_loader.load('assets/models/shapespark-low-poly-plants-kit-double-sided-for-baking.gltf', (/** @type {{ scene: THREE.Group }} */ model) => { 
     // model.scene.position.set(-100, 0, 100);
@@ -166,16 +114,16 @@ gltf_loader.load('assets/models/shapespark-low-poly-plants-kit-double-sided-for-
     // let tree = model.scene.getObjectByName('Tree-01-1');
 
     let instanced_objects = [
-        new InstancedObject(model.scene, 'Tree-01-1', 5000, treeCondition(height_map_generator.perlin, -10, heights, 0)),
-        new InstancedObject(model.scene, 'Tree-02-1', 5000, treeCondition(height_map_generator.perlin, -10, heights, 0)),
-        new InstancedObject(model.scene, 'Grass-01', 50000, grassCondition(height_map_generator.perlin, -10, heights, -1)),
-        new InstancedObject(model.scene, 'Grass-02', 50000, grassCondition(height_map_generator.perlin, -10, heights, -1)),
-        new InstancedObject(model.scene, 'Grass-03', 50000, grassCondition(height_map_generator.perlin, -10, heights, -1)),
-        new InstancedObject(model.scene, 'Bush-01', 10000, grassCondition(height_map_generator.perlin, -10, heights, -1)),
-        new InstancedObject(model.scene, 'Bush-02', 15000, grassCondition(height_map_generator.perlin, -10, heights, -1)),
-        new InstancedObject(model.scene, 'Bush-03', 20000, grassCondition(height_map_generator.perlin, -10, heights, -1)),
-        new InstancedObject(model.scene, 'Bush-04', 25000, grassCondition(height_map_generator.perlin, -10, heights, -1)),
-        new InstancedObject(model.scene, 'Bush-05', 30000, grassCondition(height_map_generator.perlin, -10, heights, -1))
+        new InstancedObject(model.scene, 'Tree-01-1', 5000, treeCondition(height_map_generator, -10, 0)),
+        new InstancedObject(model.scene, 'Tree-02-1', 5000, treeCondition(height_map_generator, -10, 0)),
+        new InstancedObject(model.scene, 'Grass-01', 15000, grassCondition(height_map_generator, -10, -1)),
+        new InstancedObject(model.scene, 'Grass-02', 15000, grassCondition(height_map_generator, -10, -1)),
+        new InstancedObject(model.scene, 'Grass-03', 15000, grassCondition(height_map_generator, -10, -1)),
+        new InstancedObject(model.scene, 'Bush-01', 1000, grassCondition(height_map_generator, -10, -1)),
+        new InstancedObject(model.scene, 'Bush-02', 1500, grassCondition(height_map_generator, -10, -1)),
+        new InstancedObject(model.scene, 'Bush-03', 2000, grassCondition(height_map_generator, -10, -1)),
+        new InstancedObject(model.scene, 'Bush-04', 2500, grassCondition(height_map_generator, -10, -1)),
+        new InstancedObject(model.scene, 'Bush-05', 3000, grassCondition(height_map_generator, -10, -1))
     ];
     instanced_objects.forEach(object => object.meshes.forEach(mesh => scene.add(mesh)));
 
@@ -223,117 +171,156 @@ water.position.y = -10;
 water.rotation.x = Math.PI * -0.5;
 scene.add(water);
 
-class CameraControls
+const controls = new CameraControls(camera, renderer, height_map);
+
+
+class Coordinates
 {
     /**
-     * @param {THREE.PerspectiveCamera} camera 
+     * @param {number} field_x 
+     * @param {number} field_y 
+     * @param {THREE.Vector3} result 
+     * @returns 
      */
-    constructor(camera)
+    fieldToScene(field_x, field_y, result)
     {
-        this._camera = camera;
-        this._camera_target = new THREE.Vector3();
-        this._camera_target.set(-100, 0, 100);
-        this._camera_direction_spherical = new THREE.Spherical();
-        this._camera_direction_spherical.phi = 0.94;
-        this._camera_direction_spherical.theta = -0.66;
-        this._camera_direction = new THREE.Vector3();
-        this._camera_position = new THREE.Vector3();
-        this._camera_movement = new THREE.Spherical();
-        this._camera_movement.phi = Math.PI / 2;
-        this._camera_movement.theta = this._camera_direction_spherical.theta;
-        this._camera_distance = 40;
-        this.update();
-        this._left = false;
-        this._right = false;
-        renderer.domElement.addEventListener('mousedown', this._onMouseDown.bind(this));
-        renderer.domElement.addEventListener('mouseup', this._onMouseUp.bind(this));
-        renderer.domElement.addEventListener('mousemove', this._onMouseMove.bind(this));
-        renderer.domElement.addEventListener('wheel', this._onMouseWheel.bind(this));
-        renderer.domElement.addEventListener('contextmenu', event => event.preventDefault());
+        result.set(field_x - 128, height_map[field_x][field_y], field_y - 128);
+    }
+}
+
+const coordinates = new Coordinates();
+
+class PointerSelector
+{
+    constructor()
+    {
+        this._pointer_position = new THREE.Vector2();
+        this._box_map_position = new THREE.Vector2();
+        this._raycaster = new THREE.Raycaster();
+        this._raycaster = new THREE.Raycaster();
+        this.box = this._createBox();
+        window.addEventListener('pointermove', this._onPointerMove.bind(this));
     }
 
     update()
     {
-        let x = Math.max(0, Math.min(256, Math.round(this._camera_position.x) + 128));
-        let y = Math.max(0, Math.min(256, Math.round(this._camera_position.z) + 128));
-        this._camera_target.y = heights[x][y];
-        this._camera_direction.setFromSpherical(this._camera_direction_spherical);
-        this._camera_position.copy(this._camera_target);
-        this._camera_position.addScaledVector(this._camera_direction, this._camera_distance);
-        camera.position.copy(this._camera_position);
-        camera.lookAt(this._camera_target.x, this._camera_target.y, this._camera_target.z);
-    }
+        // document.title = `${this._pointer_position.x}`;
+        this._raycaster.setFromCamera(this._pointer_position, camera);
+        let intersections = this._raycaster.intersectObject(ground);
 
-    /**
-     * 
-     * @param {WheelEvent} event 
-     */
-    _onMouseWheel(event)
-    {
-        console.log(event.deltaY);
-        if (event.deltaY > 0) this._camera_distance *= event.deltaY / 90;
-        if (event.deltaY < 0) this._camera_distance /= event.deltaY / -90;
-    }
-
-    /**
-     * @param {MouseEvent} event
-     */
-    _onMouseDown(event)
-    {
-        console.log(event.button)
-        switch (event.button)
+        if (intersections.length > 0)
         {
-            case 0: this._left = true; break;
-            case 2: this._right = true; break;
+            let intersection = intersections.reduce((m, v) => v.distance < m.distance ? v : m);
+            document.title = `${intersection.point.z}`;
+            let x = Math.round(intersection.point.x + 128);
+            let y = Math.round(intersection.point.z + 128);
+
+            if (x < 0 || x > 256 || y < 0 || y > 256)
+            {
+                x = y = 1000;
+            }
+
+            if (this._box_map_position.x != x || this._box_map_position.y != y)
+            {
+                this._box_map_position.set(x, y);
+                this._updateBoxPosition()
+            }
         }
     }
 
-    /**
-     * @param {MouseEvent} event
-     */
-    _onMouseUp(event)
+    _createBox()
     {
-        switch (event.button)
-        {
-            case 0: this._left = false; break;
-            case 2: this._right = false; break;
-        }
+        let box_geometry = new THREE.BoxGeometry(1, 1, 1);
+        box_geometry.translate(0.5, 0, -0.5);
+        let box_material = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.5 }); 
+        return new THREE.Mesh(box_geometry, box_material);
+    }
+
+    _updateBoxPosition()
+    {
+        document.title = `${this._box_map_position.x}`;
+        let height = this._box_map_position.x == 1000 ? 0 : height_map[this._box_map_position.x][this._box_map_position.y];
+        this.box.position.set(this._box_map_position.x - 128, height, this._box_map_position.y - 128);
     }
 
     /**
-     * @param {MouseEvent} event
+     * @param {PointerEvent} event 
      */
-    _onMouseMove(event)
+    _onPointerMove(event)
     {
-        if (this._left)
-        {
-            this._camera_direction.setFromSpherical(this._camera_movement);
-            this._camera_target.addScaledVector(this._camera_direction, -event.movementY * (this._camera_distance / 100));
-            this._camera_movement.theta += Math.PI / 2;
-            this._camera_direction.setFromSpherical(this._camera_movement);
-            this._camera_target.addScaledVector(this._camera_direction, -event.movementX * (this._camera_distance / 100));
-            this._camera_movement.theta -= Math.PI / 2;
-        }
-        if (this._right)
-        {
-            this._camera_direction_spherical.theta -= event.movementX * 0.01;
-            this._camera_direction_spherical.phi += event.movementY * -0.01;
-            this._camera_movement.theta = this._camera_direction_spherical.theta;
-        }
+        this._pointer_position.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
+        this._pointer_position.y = (event.clientY / renderer.domElement.clientHeight) * -2 + 1;
     }
 }
 
-const X = new THREE.Vector3(1, 0, 0);
-const Y = new THREE.Vector3(0, 1, 0);
+const pointer_selector = new PointerSelector();
+pointer_selector._box_map_position.set(0, 256);
+pointer_selector._updateBoxPosition();
+scene.add(pointer_selector.box);
 
-const controls = new CameraControls(camera);
+// const selection_geometry = new THREE.BufferGeometry().setFromPoints([ new THREE.Vector3(-128, 3, 128), new THREE.Vector3(-120, 3, 128), new THREE.Vector3(-120, 3, 120) ]);
+// const selection_material = new THREE.MeshBasicMaterial({ color: '#ff0000', transparent: false, opacity: 0.5, side: THREE.DoubleSide });
+// const selection = new THREE.Mesh(selection_geometry, selection_material);
+// selection.rotateX(Math.PI * -0.5);
+// scene.add(selection);
+
+// /**
+//  * @param {THREE.BufferGeometry} geometry 
+//  * @param {number} geometry_index 
+//  * @param {THREE.Intersection} intersection 
+//  * @param {'a' | 'b' | 'c'} face_component 
+//  */
+// function setPosition(geometry, geometry_index, intersection, face_component)
+// {
+//     if (intersection.face)
+//     {
+//         let index = intersection.face[face_component];
+//         let intersection_position = intersection.object.geometry.getAttribute('position');
+//         let x = intersection_position.getX(index);
+//         let y = intersection_position.getY(index);
+//         let z = intersection_position.getZ(index);
+//         let position = geometry.getAttribute('position');
+//         position.setXYZ(geometry_index, x, y + 0.0001, z);
+//         // position.setX(geometry_index, x);
+//         // position.setZ(geometry_index, 0 - y);
+//         // position.setY(geometry_index, z);
+//         position.needsUpdate = true;
+//     }
+// }
+
+// /**
+//  * @param {THREE.Intersection} intersection 
+//  */
+// function highlightFace(intersection)
+// {
+//     if (intersection.face)
+//     {
+//         /** @type {THREE.PlaneGeometry} */
+//         // @ts-ignore
+//         let geometry = intersection.object.geometry;
+
+//         // let color = geometry.getAttribute('color');
+//         // color.setXYZ(intersection.face.a, 256, 0, 0);
+//         // color.setXYZ(intersection.face.b, 256, 0, 0);
+//         // color.setXYZ(intersection.face.c, 256, 0, 0);
+//         // color.needsUpdate = true;
+
+//         document.title = `${intersection.point.x}`;
+
+//         setPosition(selection.geometry, 0, intersection, 'a');
+//         setPosition(selection.geometry, 1, intersection, 'b');
+//         setPosition(selection.geometry, 2, intersection, 'c');
+//     }
+// }
 
 function animate()
 {
-	requestAnimationFrame( animate );
+	requestAnimationFrame(animate);
 	// cube.rotation.x += 0.01;
 	// cube.rotation.y += 0.01;
     // water.material.uniforms['time'].value += 1.0 / 60.0;
+
+    pointer_selector.update();
 	renderer.render(scene, camera);
     controls.update();
 }
