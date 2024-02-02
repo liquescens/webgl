@@ -5,9 +5,9 @@ export class CameraControls
     /**
      * @param {THREE.PerspectiveCamera} camera 
      * @param {THREE.WebGLRenderer} renderer 
-     * @param {number[][]} heights
+     * @param {(x: number, y: number) => number} height_map
      */
-    constructor(camera, renderer, heights)
+    constructor(camera, renderer, height_map)
     {
         this._camera = camera;
         this._camera_target = new THREE.Vector3();
@@ -21,7 +21,7 @@ export class CameraControls
         this._camera_movement.phi = Math.PI / 2;
         this._camera_movement.theta = this._camera_direction_spherical.theta;
         this._camera_distance = 40;
-        this._heights = heights;
+        this._height_map = height_map;
         this.update();
         this._left = false;
         this._middle = false;
@@ -37,7 +37,7 @@ export class CameraControls
     {
         let x = Math.max(0, Math.min(256, Math.round(this._camera_position.x) + 128));
         let y = Math.max(0, Math.min(256, Math.round(this._camera_position.z) + 128));
-        this._camera_target.y = this._heights[x][y];
+        this._camera_target.y = this._height_map(x, y);
         this._camera_direction.setFromSpherical(this._camera_direction_spherical);
         this._camera_position.copy(this._camera_target);
         this._camera_position.addScaledVector(this._camera_direction, this._camera_distance);
@@ -52,8 +52,10 @@ export class CameraControls
     _onMouseWheel(event)
     {
         console.log(event.deltaY);
-        if (event.deltaY > 0) this._camera_distance *= event.deltaY / 90;
-        if (event.deltaY < 0) this._camera_distance /= event.deltaY / -90;
+        // if (event.deltaY > 0) this._camera_distance *= event.deltaY / 90;
+        // if (event.deltaY < 0) this._camera_distance /= event.deltaY / -90;
+        if (event.deltaY > 0) this._camera_distance *= event.deltaY / 50;
+        if (event.deltaY < 0) this._camera_distance /= event.deltaY / -50;
     }
 
     /**
@@ -61,7 +63,6 @@ export class CameraControls
      */
     _onMouseDown(event)
     {
-        console.log(event.button)
         switch (event.button)
         {
             case 0: this._left = true; break;
@@ -100,10 +101,12 @@ export class CameraControls
         if (this._right)
         {
             this._camera_direction.setFromSpherical(this._camera_movement);
-            this._camera_target.addScaledVector(this._camera_direction, -event.movementY * (this._camera_distance / 100));
+            // this._camera_target.addScaledVector(this._camera_direction, -event.movementY * (this._camera_distance / 100));
+            this._camera_target.addScaledVector(this._camera_direction, -event.movementY * 0.1);
             this._camera_movement.theta += Math.PI / 2;
             this._camera_direction.setFromSpherical(this._camera_movement);
-            this._camera_target.addScaledVector(this._camera_direction, -event.movementX * (this._camera_distance / 100));
+            // this._camera_target.addScaledVector(this._camera_direction, -event.movementX * (this._camera_distance / 100));
+            this._camera_target.addScaledVector(this._camera_direction, -event.movementX * 0.1);
             this._camera_movement.theta -= Math.PI / 2;
         }
     }

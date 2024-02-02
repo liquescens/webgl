@@ -173,7 +173,6 @@ scene.add(water);
 
 const controls = new CameraControls(camera, renderer, height_map);
 
-
 class Coordinates
 {
     /**
@@ -190,68 +189,6 @@ class Coordinates
 
 const coordinates = new Coordinates();
 
-class PointerSelector
-{
-    constructor()
-    {
-        this._pointer_position = new THREE.Vector2();
-        this._box_map_position = new THREE.Vector2();
-        this._raycaster = new THREE.Raycaster();
-        this._raycaster = new THREE.Raycaster();
-        this.box = this._createBox();
-        window.addEventListener('pointermove', this._onPointerMove.bind(this));
-    }
-
-    update()
-    {
-        // document.title = `${this._pointer_position.x}`;
-        this._raycaster.setFromCamera(this._pointer_position, camera);
-        let intersections = this._raycaster.intersectObject(ground);
-
-        if (intersections.length > 0)
-        {
-            let intersection = intersections.reduce((m, v) => v.distance < m.distance ? v : m);
-            document.title = `${intersection.point.z}`;
-            let x = Math.round(intersection.point.x + 128);
-            let y = Math.round(intersection.point.z + 128);
-
-            if (x < 0 || x > 256 || y < 0 || y > 256)
-            {
-                x = y = 1000;
-            }
-
-            if (this._box_map_position.x != x || this._box_map_position.y != y)
-            {
-                this._box_map_position.set(x, y);
-                this._updateBoxPosition()
-            }
-        }
-    }
-
-    _createBox()
-    {
-        let box_geometry = new THREE.BoxGeometry(1, 1, 1);
-        box_geometry.translate(0.5, 0, -0.5);
-        let box_material = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.5 }); 
-        return new THREE.Mesh(box_geometry, box_material);
-    }
-
-    _updateBoxPosition()
-    {
-        document.title = `${this._box_map_position.x}`;
-        let height = this._box_map_position.x == 1000 ? 0 : height_map[this._box_map_position.x][this._box_map_position.y];
-        this.box.position.set(this._box_map_position.x - 128, height, this._box_map_position.y - 128);
-    }
-
-    /**
-     * @param {PointerEvent} event 
-     */
-    _onPointerMove(event)
-    {
-        this._pointer_position.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
-        this._pointer_position.y = (event.clientY / renderer.domElement.clientHeight) * -2 + 1;
-    }
-}
 
 const pointer_selector = new PointerSelector();
 pointer_selector._box_map_position.set(0, 256);
