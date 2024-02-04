@@ -8,7 +8,7 @@ import { GLTFLoader } from './node_modules/three/examples/jsm/loaders/GLTFLoader
 // import { Water } from './node_modules/three/examples/jsm/objects/Water2.js';
 // import { Water } from './node_modules/three/examples/jsm/objects/Water.js';
 import { HeightMapGenerator } from './js/HeightMapGenerator.js';
-import { CameraControls } from './js/CameraControls.js';
+import { CameraControls } from './js/MapCameraControls.js';
 import { ImprovedNoise } from './node_modules/three/examples/jsm/math/ImprovedNoise.js';
 import { InstancedObject } from './js/InstancedObject.js';
 

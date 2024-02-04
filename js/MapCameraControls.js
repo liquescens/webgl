@@ -1,6 +1,6 @@
 // @ts-check
 import * as THREE from 'three';
-export class CameraControls
+export class MapCameraControls
 {
     /**
      * @param {THREE.PerspectiveCamera} camera 
@@ -11,7 +11,7 @@ export class CameraControls
     {
         this._camera = camera;
         this._camera_target = new THREE.Vector3();
-        this._camera_target.set(-100, 0, 100);
+        this._camera_target.set(0, 0, 0);
         this._camera_direction_spherical = new THREE.Spherical();
         this._camera_direction_spherical.phi = 0.94;
         this._camera_direction_spherical.theta = -0.66;
@@ -20,7 +20,7 @@ export class CameraControls
         this._camera_movement = new THREE.Spherical();
         this._camera_movement.phi = Math.PI / 2;
         this._camera_movement.theta = this._camera_direction_spherical.theta;
-        this._camera_distance = 40;
+        this._camera_distance = 5;
         this._height_map = height_map;
         this.update();
         this._left = false;
@@ -35,9 +35,7 @@ export class CameraControls
 
     update()
     {
-        let x = Math.max(0, Math.min(256, Math.round(this._camera_position.x) + 128));
-        let y = Math.max(0, Math.min(256, Math.round(this._camera_position.z) + 128));
-        this._camera_target.y = this._height_map(x, y);
+        this._camera_target.y = this._height_map(this._camera_position.x, this._camera_position.z);
         this._camera_direction.setFromSpherical(this._camera_direction_spherical);
         this._camera_position.copy(this._camera_target);
         this._camera_position.addScaledVector(this._camera_direction, this._camera_distance);
@@ -54,8 +52,8 @@ export class CameraControls
         console.log(event.deltaY);
         // if (event.deltaY > 0) this._camera_distance *= event.deltaY / 90;
         // if (event.deltaY < 0) this._camera_distance /= event.deltaY / -90;
-        if (event.deltaY > 0) this._camera_distance *= event.deltaY / 50;
-        if (event.deltaY < 0) this._camera_distance /= event.deltaY / -50;
+        this._camera_distance += event.deltaY / 100;
+        if (this._camera_distance <= 0) this._camera_distance = 1;
     }
 
     /**
