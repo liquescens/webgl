@@ -6,6 +6,7 @@ export class HeightMapGenerator
     {
         this.perlin = new ImprovedNoise();
         this.components = [ [0.01, 32], [0.02, 8], [0.05, 4], [0.1, 1], [0.75, 0.1] ]; // [0.02, 8], [0.04, 4], 
+        this.seed = 0;
     }
 
     /**
@@ -28,6 +29,6 @@ export class HeightMapGenerator
      */
     generateHeight(x, y)
     {
-        return this.components.map(([scale, weight], index) => this.perlin.noise(x * scale, y * scale, index) * weight).reduce((s, a) => s + a, 0);
+        return this.components.map(([scale, weight], index) => this.perlin.noise(x * scale, y * scale, index + this.seed) * weight).reduce((s, a) => s + a, 0);
     }
 }
