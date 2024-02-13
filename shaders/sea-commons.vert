@@ -13,7 +13,7 @@ const float EPSILON	= 1e-3;
 #define EPSILON_NRM (0.1 / Resolution.x)
 const int ITER_GEOMETRY = 3;
 const int ITER_FRAGMENT = 5;
-const float SEA_CHOPPY = 12.0;
+const float SEA_CHOPPY = 36.0;
 const vec3 SEA_BASE = vec3(0.0, 0.09, 0.18);
 const vec3 SEA_WATER_COLOR = vec3(0.8, 0.9, 0.6) * 0.6;
 #define SEA_TIME (1.0 + Time * SeaSpeed)

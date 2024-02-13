@@ -107,9 +107,9 @@ class SeaSceneLoader extends SceneLoader
             // SeaSpeed: { value: 0.8 },
             // SeaHeight: { value: 1.6 },
             // SeaFrequency: { value: 0.16 },
-            SeaSpeed: { value: 0.1 },
-            SeaHeight: { value: 0.1 },
-            SeaFrequency: { value: 2 },
+            SeaSpeed: { value: 0.01 },
+            SeaHeight: { value: 0.2 },
+            SeaFrequency: { value: 4 },
         };
     
         let shader_commons = await (await fetch('shaders/sea-commons.vert')).text();
