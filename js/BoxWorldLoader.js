@@ -39,13 +39,13 @@ export class BoxWorldLoader
     loadSunLight()
     {
         this.renderer.shadowMap.enabled = true;
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.renderer.shadowMap.type = THREE.VSMShadowMap;
         this.cast_shadows = true;
         this.receive_shadows = true;
         let light = new THREE.DirectionalLight('#ffffff', 2);
         light.shadow.radius = 2;
         light.shadow.bias = 0;
-        light.shadow.bias = -0.0001;
+        light.shadow.bias = -0.00005;
         light.position.set(12, 4, 14);
         light.target.position.set(20, 0, 20);
         light.target.updateMatrixWorld();
@@ -239,6 +239,9 @@ export class BoxWorldLoader
         mesh.instanceMatrix.needsUpdate = true;
     }
 
+    /**
+     * @returns {number[][]}
+     */
     _createHeightMap()
     {
         let map = new Array();

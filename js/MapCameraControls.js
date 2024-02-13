@@ -54,6 +54,7 @@ export class MapCameraControls
         // if (event.deltaY < 0) this._camera_distance /= event.deltaY / -90;
         this._camera_distance += event.deltaY / 100;
         if (this._camera_distance <= 0) this._camera_distance = 1;
+        event.preventDefault();
     }
 
     /**
