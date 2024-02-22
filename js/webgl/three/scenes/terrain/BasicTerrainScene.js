@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { Scene } from "../Scene.js";
 import { PlaneGeometryBuilder } from '../Geometry.js';
+import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 
 export class BasicTerrainScene extends Scene
 {
@@ -30,11 +31,15 @@ export class BasicTerrainScene extends Scene
             camera_controls.update();
             this.renderer.render(this.scene, camera);
         }
+        
+        let gui = new GUI();
+        let seaFolder = gui.addFolder('Sea');
+        seaFolder.add(material, 'wireframe').name('Wireframe');
     }
 
     _createGeometry()
     {
-        let geometry_builder = new PlaneGeometryBuilder(10, 10, 1000, 1000);
+        let geometry_builder = new PlaneGeometryBuilder(10, 10, 500, 500);
         // geometry_builder.createNormalAttribute();
         // let position = geometry_builder.buffer.getAttribute('position');
         // let i = 0;
