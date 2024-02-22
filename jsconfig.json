@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "skipLibCheck": false,
-        "target": "ES2017",
+        "target": "ES2021",
         "strictNullChecks": true,
         "noImplicitAny": true,
         "allowJs": true,
