@@ -12,5 +12,5 @@ vec3 phong(vec3 position, vec3 normal, vec3 color)
     vec3 cameraDirection = normalize(CameraPosition - position);
     float specular = pow(max(dot(reflect(-lightDirection, normal), cameraDirection), 0.0), 64.0);
 
-    return vec3(0.1, 0.1, 0.1) + color * (diffuse * 0.8 + specular * 0.5);
+    return color * (vec3(0.1, 0.1, 0.1) + diffuse * 0.8 + specular * 0.5);
 }
