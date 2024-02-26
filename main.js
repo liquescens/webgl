@@ -1,12 +1,9 @@
 // @ts-check
-import * as SCENCES from './js/webgl/three/scenes/index.js';
+import * as PROJECTS from './js/webgl/three/projects/index.js';
 
 async function onWindowLoad()
 {
-    let scene = new SCENCES.BasicTerrainScene();
-    await scene.load();
-    document.body.appendChild(scene.renderer.domElement);
-    scene.animate();
+    await new PROJECTS.SeaWave().run();
 }
 
 window.addEventListener('load', onWindowLoad);
