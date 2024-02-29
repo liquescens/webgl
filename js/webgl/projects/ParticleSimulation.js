@@ -7,6 +7,8 @@ import { WebGLProject } from "./WebGLProject.js";
 // count=1000000&pdf=0.99&ss=2&dca=18&vd=5.5
 // count=1000000&pdf=0.99&ss=2&dca=4&vd=3
 // count=1000000&pdf=0.98&ss=4&dca=8&vd=6
+// count=5000000&pdf=0.98&ss=7&dca=18&vd=11
+// count=5000000&pdf=0.99&ss=3&dca=15&vd=6
 class Controls
 {
     static Defaults = 
@@ -291,6 +293,7 @@ export class ParticleSimulation extends WebGLProject
             // gl.clear(gl.COLOR_BUFFER_BIT);
             gl.useProgram(space2.handle);
             if (controls.pheromone_decay_factor.changed) space2.pheromone_decay_factor = controls.pheromone_decay_factor.input.valueAsNumber;
+            space2.pheromone_decay_factor = 1.0;
             gl.bindVertexArray(render_plane.handle);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
                 gl.bindTexture(gl.TEXTURE_2D, particles.vertex_arrays.output.buffers.framebuffer.texture_handle);
@@ -304,6 +307,7 @@ export class ParticleSimulation extends WebGLProject
                 gl.drawArrays(gl.TRIANGLES, 0, 6);
                 gl.bindTexture(gl.TEXTURE_2D, particles.vertex_arrays.input.buffers.framebuffer.texture_handle);
                 gl.bindFramebuffer(gl.FRAMEBUFFER, particles.vertex_arrays.output.buffers.framebuffer.handle);
+                space2.pheromone_decay_factor = controls.pheromone_decay_factor.input.valueAsNumber;
                 gl.drawArrays(gl.TRIANGLES, 0, 6);
             gl.bindVertexArray(null);
             gl.useProgram(space.handle);
