@@ -1,0 +1,13 @@
+canvas {
+    box-shadow: 3px 0 0 black;
+}
+#controls-placeholder {
+    float: right;
+}
+#link {
+    max-width: 400px;
+    /* overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap; */
+    word-break: break-all;
+}
