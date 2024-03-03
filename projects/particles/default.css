@@ -1,13 +1,51 @@
+body {
+    background-color: #555;
+}
 canvas {
-    box-shadow: 3px 0 0 black;
+    box-shadow: 0 0 5px 0 black;
+    border-radius: 20px;
+}
+td.comment {
+    font-size: 0.7em;
+}
+#webgl-placeholder {
+    float: left;
 }
 #controls-placeholder {
-    float: right;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    color: white;
+}
+#controls-placeholder > * {
+    padding: 0.5em;
+}
+#controls-placeholder td > div {
+    display: flex;
+}
+#controls-placeholder input,
+#controls-placeholder select {
+    flex: 1;
+    padding: 0.3em;
+}
+#controls-placeholder > button {
+    margin: 1em;
+}
+#link a {
+    color: white;
 }
 #link {
-    max-width: 400px;
+    /* max-width: 400px; */
     /* overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap; */
     word-break: break-all;
+    cursor: pointer;
+    font-size: 0.7em;
+}
+#parameter-sets {
+    display: table;
+    margin: 1em;
+}
+#parameter-sets > * {
+    margin: 3px;
+    width: 3em;
 }
